@@ -1,0 +1,25 @@
+
+# Maven build output
+target/
+
+# Java compiled files
+*.class
+
+# Logs
+*.log
+
+# macOS files
+.DS_Store
+
+# IDE configuration
+.idea/
+.vscode/
+
+# Environment variables and secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Temporary files
+*.tmp
