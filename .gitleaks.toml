@@ -1,0 +1,5 @@
+
+title = "CIA2 DevSecOps Gitleaks Configuration"
+
+[extend]
+useDefault = true
