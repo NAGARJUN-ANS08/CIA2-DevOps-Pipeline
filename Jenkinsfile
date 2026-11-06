@@ -15,17 +15,16 @@ pipeline {
             }
         }
 
-        stage('Gitleaks Scan') {
-            steps {
-                echo 'Scanning repository for exposed secrets...'
-                sh '''
-                    gitleaks detect \
-                    --source . \
-                    --verbose \
-                    --redact
-                '''
-            }
-        }
+       stage('Gitleaks Scan') {
+    steps {
+        echo 'Scanning repository for exposed secrets...'
+        sh '''
+            /opt/homebrew/bin/gitleaks git \
+            --verbose \
+            --redact
+        '''
+    }
+}
 
         stage('Maven Compile') {
             steps {
