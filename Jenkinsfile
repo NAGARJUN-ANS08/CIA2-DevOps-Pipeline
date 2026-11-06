@@ -99,6 +99,8 @@ pipeline {
             }
             steps {
                 sh '''
+                    export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+                    docker --version
                     docker build -t ${APP_NAME}:${BUILD_NUMBER} .
                 '''
             }
@@ -112,6 +114,7 @@ pipeline {
             }
             steps {
                 sh '''
+                    export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
                     docker image inspect ${APP_NAME}:${BUILD_NUMBER}
                     docker images ${APP_NAME}
                 '''
