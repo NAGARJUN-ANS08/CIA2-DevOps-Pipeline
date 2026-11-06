@@ -9,10 +9,10 @@ pipeline {
     }
 
     environment {
-        APP_NAME = 'student-management'
-
-        // Add Homebrew locations to Jenkins PATH
-        PATH+LOCAL_TOOLS = '/opt/homebrew/bin:/usr/local/bin'
+     environment {
+    APP_NAME = 'student-management'
+    PATH = "/opt/homebrew/bin:/usr/local/bin:${env.PATH}"
+}
     }
 
     stages {
