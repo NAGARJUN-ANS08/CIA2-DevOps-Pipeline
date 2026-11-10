@@ -103,20 +103,19 @@ pipeline {
         }
 
         stage('Deploy to GKE') {
-                steps {
-                    sh '''
-                        # Find the gcloud SDK root directory dynamically and add its bin folder to PATH
-                        GCLOUD_BIN_DIR="$(gcloud info --format='value(installation.sdk_root)')/bin"
-                        export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$GCLOUD_BIN_DIR"
-                        
-                        # Update Kubernetes deployment manifest image tag dynamically
-                        sed -i.bak "s|image: .*|image: ${IMAGE_URI}:${IMAGE_TAG}|g" k8s/deployment.yaml
-                        
-                        # Apply manifests to GKE cluster
-                        kubectl apply --validate=false -f k8s/
-                    '''
-                }
+            steps {
+                sh '''
+                    # Explicitly include Homebrew and the exact Google Cloud SDK bin directory in PATH
+                    export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/share/google-cloud-sdk/bin"
+                    
+                    # Update Kubernetes deployment manifest image tag dynamically
+                    sed -i.bak "s|image: .*|image: ${IMAGE_URI}:${IMAGE_TAG}|g" k8s/deployment.yaml
+                    
+                    # Apply manifests to GKE cluster
+                    kubectl apply --validate=false -f k8s/
+                '''
             }
+        }
     }
 
     post {
