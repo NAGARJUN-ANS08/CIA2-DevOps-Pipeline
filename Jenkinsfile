@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -10,6 +9,11 @@ pipeline {
 
     environment {
         APP_NAME = 'student-management'
+        GCP_PROJECT_ID = 'java-cicd-devops'
+        GCP_REGION = 'asia-south1'
+        ARTIFACT_REPO = 'java-app-repo'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        IMAGE_URI = "${env.GCP_REGION}-docker.pkg.dev/${env.GCP_PROJECT_ID}/${env.ARTIFACT_REPO}/${env.APP_NAME}"
     }
 
     stages {
@@ -53,22 +57,12 @@ pipeline {
             }
         }
 
-        stage('Maven Compile') {
+        stage('Maven Compile & Test') {
             steps {
                 sh '''
                     export JAVA_HOME=$(/usr/libexec/java_home -v 25)
                     export PATH="$JAVA_HOME/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
-                    mvn clean compile
-                '''
-            }
-        }
-
-        stage('Unit Testing') {
-            steps {
-                sh '''
-                    export JAVA_HOME=$(/usr/libexec/java_home -v 25)
-                    export PATH="$JAVA_HOME/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
-                    mvn test
+                    mvn clean test package -DskipTests=false
                 '''
             }
             post {
@@ -81,42 +75,43 @@ pipeline {
             }
         }
 
-        stage('Maven Package') {
+        stage('GCP Authentication & Docker Login') {
             steps {
                 sh '''
-                    export JAVA_HOME=$(/usr/libexec/java_home -v 25)
-                    export PATH="$JAVA_HOME/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
-                    mvn package -DskipTests
+                    export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+                    # Authenticate Docker to GCP Artifact Registry
+                    gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
                 '''
             }
         }
 
-        stage('Docker Build') {
-            when {
-                expression {
-                    fileExists('Dockerfile')
-                }
-            }
+        stage('Cross-Arch Docker Build & Push') {
             steps {
                 sh '''
                     export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-                    docker --version
-                    docker build -t ${APP_NAME}:${BUILD_NUMBER} .
+                    
+                    # Ensure buildx builder is active
+                    docker buildx create --use --name multiarch-builder || true
+
+                    # Build for linux/amd64 (GKE node architecture) and push to Artifact Registry
+                    docker buildx build --platform linux/amd64 \
+                        -t ${IMAGE_URI}:${IMAGE_TAG} \
+                        -t ${IMAGE_URI}:latest \
+                        --push .
                 '''
             }
         }
 
-        stage('Docker Image Verification') {
-            when {
-                expression {
-                    fileExists('Dockerfile')
-                }
-            }
+        stage('Deploy to GKE') {
             steps {
                 sh '''
                     export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-                    docker image inspect ${APP_NAME}:${BUILD_NUMBER}
-                    docker images ${APP_NAME}
+                    
+                    # Update Kubernetes deployment manifest image tag dynamically
+                    sed -i.bak "s|image: .*|image: ${IMAGE_URI}:${IMAGE_TAG}|g" k8s/deployment.yaml
+                    
+                    # Apply manifests to GKE cluster
+                    kubectl apply -f k8s/
                 '''
             }
         }
@@ -124,7 +119,7 @@ pipeline {
 
     post {
         success {
-            echo 'CI PIPELINE COMPLETED SUCCESSFULLY'
+            echo 'CI/CD PIPELINE COMPLETED SUCCESSFULLY - APP DEPLOYED TO GKE!'
         }
 
         failure {
@@ -140,4 +135,3 @@ pipeline {
         }
     }
 }
-//commands
