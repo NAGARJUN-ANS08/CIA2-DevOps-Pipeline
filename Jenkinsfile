@@ -105,7 +105,7 @@ pipeline {
         stage('Deploy to GKE') {
             steps {
                 sh '''
-                    export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$(gcloud info --format=\'value(installation.sdk_root)\')/bin"
+                    export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
                     
                     # Update Kubernetes deployment manifest image tag dynamically
                     sed -i.bak "s|image: .*|image: ${IMAGE_URI}:${IMAGE_TAG}|g" k8s/deployment.yaml
