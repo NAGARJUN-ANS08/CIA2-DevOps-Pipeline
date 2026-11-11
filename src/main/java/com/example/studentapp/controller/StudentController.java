@@ -17,7 +17,7 @@ public class StudentController {
 
     // Sample student records
     private final List<Student> students = List.of(
-        new Student(1, "Varun", "Computer Science"),
+        new Student(1, "Karun", "Computer Science"),
         new Student(2, "Priya", "Electronics"),
         new Student(3, "Rahul", "Information Technology")
     );
