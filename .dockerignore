@@ -3,6 +3,7 @@
 .gitignore
 .vscode/
 .idea/
+target/
 *.log
 .env
 .env.*
